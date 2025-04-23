@@ -1,1 +1,10 @@
 .env
+# Ignore SQLite database file
+hangman.db
+
+# Ignore __pycache__ folders (compiled Python files)
+__pycache__/
+assets/__pycache__/
+
+# Ignore environment files
+venv/
