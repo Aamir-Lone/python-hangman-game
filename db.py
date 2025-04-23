@@ -1,45 +1,8 @@
-# import sqlite3
-
-# def setup_db():
-#     conn = sqlite3.connect("hangman.db")
-#     cur = conn.cursor()
-#     cur.execute('''CREATE TABLE IF NOT EXISTS hall_of_fame (
-#                     level TEXT PRIMARY KEY,
-#                     name TEXT,
-#                     remaining_lives INTEGER)''')
-#     conn.commit()
-#     conn.close()
-
-# def update_hall_of_fame(player_name, level, remaining_lives):
-#     conn = sqlite3.connect("hangman.db")
-#     cur = conn.cursor()
-#     cur.execute("SELECT remaining_lives FROM hall_of_fame WHERE level=?", (level,))
-#     row = cur.fetchone()
-#     if row is None or remaining_lives > row[0]:
-#         cur.execute("REPLACE INTO hall_of_fame (level, name, remaining_lives) VALUES (?, ?, ?)",
-#                     (level, player_name, remaining_lives))
-#         conn.commit()
-#     conn.close()
-
-# def show_hall_of_fame():
-#     import tableprint as tp
-#     conn = sqlite3.connect("hangman.db")
-#     cur = conn.cursor()
-#     cur.execute("SELECT level, name, remaining_lives FROM hall_of_fame")
-#     rows = cur.fetchall()
-#     conn.close()
-#     print("\nHALL OF FAME")
-#     tp.table(rows, header=["Level", "Winner", "Lives"], width=50)
-
-
-
-
-
 
 import sqlite3
 import os
 
-# Function to set up the database and create the hall_of_fame table if it doesn't exist
+# this Function to set up the database and create the hall_of_fame table if it doesn't exist
 def setup_db():
     db_file = "hangman.db"
     if not os.path.exists(db_file):
@@ -51,9 +14,10 @@ def setup_db():
         conn = sqlite3.connect(db_file)
         cur = conn.cursor()
         cur.execute('''CREATE TABLE IF NOT EXISTS hall_of_fame (
-                        level TEXT PRIMARY KEY,
+                        level TEXT,
                         name TEXT,
-                        remaining_lives INTEGER)''')
+                        remaining_lives INTEGER,
+                        PRIMARY KEY (level, name))''')
         conn.commit()
         conn.close()
     except sqlite3.Error as e:
@@ -61,19 +25,19 @@ def setup_db():
         conn.close()
 
 
-# Function to update hall of fame based on the player's performance
+# this Function to update hall of fame based on the player's performance
 def update_hall_of_fame(player_name, level, remaining_lives):
     try:
         conn = sqlite3.connect("hangman.db")
         cur = conn.cursor()
 
-        # Checking if the level has a record, and if the current score beats the stored one
-        cur.execute("SELECT remaining_lives FROM hall_of_fame WHERE level=?", (level,))
+        # Inserts the player's score if it's better than the existing one or if no record exists
+        cur.execute("SELECT remaining_lives FROM hall_of_fame WHERE level=? AND name=?", (level, player_name))
         row = cur.fetchone()
 
-        # Insert or replace the record for that level if the new score is better
+        # Inserts a new row if no record for the player exists, or if the current score is better
         if row is None or remaining_lives > row[0]:
-            cur.execute("REPLACE INTO hall_of_fame (level, name, remaining_lives) VALUES (?, ?, ?)",
+            cur.execute("INSERT OR REPLACE INTO hall_of_fame (level, name, remaining_lives) VALUES (?, ?, ?)",
                         (level, player_name, remaining_lives))
             conn.commit()
         conn.close()
@@ -82,13 +46,15 @@ def update_hall_of_fame(player_name, level, remaining_lives):
         conn.close()
 
 
-# Function to display the hall of fame (leaderboard)
+# this Function is to display the hall of fame (leaderboard)
 def show_hall_of_fame():
     import tableprint as tp
     try:
         conn = sqlite3.connect("hangman.db")
         cur = conn.cursor()
-        cur.execute("SELECT level, name, remaining_lives FROM hall_of_fame")
+
+        # Order the hall of fame by highest remaining lives
+        cur.execute("SELECT level, name, remaining_lives FROM hall_of_fame ORDER BY remaining_lives DESC")
         rows = cur.fetchall()
         conn.close()
 
